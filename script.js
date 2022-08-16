@@ -27,8 +27,8 @@ depth.onload = function () {
 	depthctx.drawImage(depth, 0, 0, w, h); // Set image to Canvas context
 };
 
-image.src = "https://localhost/image.jpg";
-depth.src = "https://localhost/depth.png";
+image.src = "/image.jpg";
+depth.src = "/depth.png";
 
 function generatesliders() {
 	// Clear all elements in #sliders

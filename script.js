@@ -1,4 +1,12 @@
-var threshold = 180; // Threshold value
+function downloadcanvas(e) {
+	var id = e.target.id.replace("download", "");
+	var canvas = document.querySelectorAll(".out")[id];
+	var link = document.createElement("a");
+	link.download = "output" + id + ".png";
+	link.href = canvas.toDataURL("image/png");
+	link.click();
+}
+
 var imagectx = document.querySelector("#imagecanvas").getContext("2d");
 var depthctx = document.querySelector("#depthcanvas").getContext("2d");
 
@@ -19,24 +27,64 @@ depth.onload = function () {
 	depthctx.drawImage(depth, 0, 0, w, h); // Set image to Canvas context
 };
 
-image.src = "http://localhost:1234/image.jpg";
-depth.src = "http://localhost:1234/depth.png";
+image.src = "https://localhost/image.jpg";
+depth.src = "https://localhost/depth.png";
+
+function generatesliders() {
+	// Clear all elements in #sliders
+	var sliders = document.querySelector("#sliders");
+	while (sliders.firstChild) {
+		sliders.removeChild(sliders.firstChild);
+	}
+	// Clear all elements in #outputs
+	var outputs = document.querySelector("#outputs");
+	while (outputs.firstChild) {
+		outputs.removeChild(outputs.firstChild);
+	}
+	// Clear all elements in #downloads
+	var downloads = document.querySelector("#downloads");
+	while (downloads.firstChild) {
+		downloads.removeChild(downloads.firstChild);
+	}
+	// Create as many sliders as the value of numoutputs
+	var numoutputs = document.querySelector("#numoutputs").value;
+	for (var i = 0; i < numoutputs; i++) {
+		// Create a new slider
+		var slider = document.createElement("input");
+		slider.type = "range";
+		slider.min = "0";
+		slider.max = "255";
+		slider.value = "0";
+		slider.className = "in";
+		document.querySelector("#sliders").appendChild(slider);
+		// Create a new canvas
+		var canvas = document.createElement("canvas");
+		canvas.className = "out";
+		document.querySelector("#outputs").appendChild(canvas);
+	}
+	// Add a button to split the images
+	var button = document.createElement("input");
+	button.type = "button";
+	button.value = "Split Images";
+	button.onclick = splitimages;
+	document.querySelector("#sliders").appendChild(button);
+}
 
 function splitimages() {
+	if (document.querySelector("#numoutputs").value == 0) {
+		return;
+	}
 	var imageData = imagectx.getImageData(0, 0, imagectx.canvas.width, imagectx.canvas.height).data;
 	var depthData = depthctx.getImageData(0, 0, depthctx.canvas.width, depthctx.canvas.height).data;
-	var avgs = [
-		Number(document.querySelector("#in1").value),
-		Number(document.querySelector("#in2").value),
-		Number(document.querySelector("#in3").value),
-		Number(document.querySelector("#in4").value),
-	];
-	var ctxs = [
-		document.querySelector("#out1").getContext("2d"),
-		document.querySelector("#out2").getContext("2d"),
-		document.querySelector("#out3").getContext("2d"),
-		document.querySelector("#out4").getContext("2d"),
-	];
+	// Create an array avgs containing the values of all elements in class .in
+	var avgs = [];
+	document.querySelectorAll(".in").forEach((node) => {
+		avgs.push(255 - Number(node.value));
+	});
+	var ctxs = [];
+	document.querySelectorAll(".out").forEach((node) => {
+		ctxs.push(node.getContext("2d"));
+	});
 	var datas = [];
 	for (var i in ctxs) {
 		ctxs[i].canvas.width = depth.width;
@@ -55,9 +103,22 @@ function splitimages() {
 				minidx = j;
 			}
 		}
+		// datas[minidx].data[i] = imageData[i].length == 4 ? imageData[i] : [...imageData[i], 255];
 		datas[minidx].data[i] = imageData[i];
+	}
+	var downloads = document.querySelector("#downloads");
+	while (downloads.firstChild) {
+		downloads.removeChild(downloads.firstChild);
 	}
 	for (var i in ctxs) {
 		ctxs[i].putImageData(datas[i], 0, 0);
+		// Remove all download buttons
+		// Create a new download button
+		var download = document.createElement("button");
+		download.innerHTML = "Download";
+		download.className = "download";
+		download.id = "download" + i;
+		download.addEventListener("click", downloadcanvas);
+		document.querySelector("#downloads").appendChild(download);
 	}
 }

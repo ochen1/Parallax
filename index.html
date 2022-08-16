@@ -25,15 +25,23 @@
 			input[type="range"] {
 				display: block;
 			}
-			#imagecanvas, #depthcanvas {
+			#imagecanvas,
+			#depthcanvas {
 				width: 50%;
 			}
 			body {
 				display: flex;
 				flex-wrap: wrap;
 			}
-			canvas:not(#imagecanvas):not(#depthcanvas){
+			.out {
 				width: 25%;
+				background-color: black;
+				margin: 0;
+				padding: 0;
+			}
+			#outputs {
+				margin: 0;
+				padding: 0;
 			}
 			input[type="button"] {
 				width: 100%;
@@ -47,19 +55,19 @@
 		</style>
 	</head>
 	<body>
-		<!-- Sliders -->
+		<input type="number" id="numoutputs" value="2" />
+		<input type="button" onclick="generatesliders()" value="Generate Sliders" />
 		<div id="sliders">
-			<input type="range" min="0" max="255" value="0" id="in1" />
-			<input type="range" min="0" max="255" value="0" id="in2" />
-			<input type="range" min="0" max="255" value="0" id="in3" />
-			<input type="range" min="0" max="255" value="0" id="in4" />
+			<input type="range" min="0" max="255" value="0" class="in" />
+			<input type="range" min="0" max="255" value="0" class="in" />
 			<input type="button" value="Split" onclick="splitimages()" />
 		</div>
 		<canvas id="imagecanvas"></canvas>
 		<canvas id="depthcanvas"></canvas>
-		<canvas id="out1"></canvas>
-		<canvas id="out2"></canvas>
-		<canvas id="out3"></canvas>
-		<canvas id="out4"></canvas>
+		<div id="outputs">
+			<canvas class="out"></canvas>
+			<canvas class="out"></canvas>
+		</div>
+		<div id="downloads"></div>
 	</body>
 </html>

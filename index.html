@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Threshold</title>
+		<script src="script.js" defer></script>
+		<style>
+			#sliders {
+				position: fixed;
+				top: 0;
+				right: 0;
+				opacity: 0.4;
+				transition: opacity 0.1s ease;
+				backdrop-filter: blur(4px);
+				background: rgba(0, 0, 0, 0.4);
+				padding: 8px;
+				margin: 8px;
+				border-radius: 5px;
+			}
+			#sliders:hover {
+				opacity: 1;
+			}
+			input[type="range"] {
+				display: block;
+			}
+			#imagecanvas, #depthcanvas {
+				width: 50%;
+			}
+			body {
+				display: flex;
+				flex-wrap: wrap;
+			}
+			canvas:not(#imagecanvas):not(#depthcanvas){
+				width: 25%;
+			}
+			input[type="button"] {
+				width: 100%;
+				border: none;
+				outline: none;
+				background: rgba(0, 0, 255, 0.5);
+				color: #fff;
+				border-radius: 9999px;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Sliders -->
+		<div id="sliders">
+			<input type="range" min="0" max="255" value="0" id="in1" />
+			<input type="range" min="0" max="255" value="0" id="in2" />
+			<input type="range" min="0" max="255" value="0" id="in3" />
+			<input type="range" min="0" max="255" value="0" id="in4" />
+			<input type="button" value="Split" onclick="splitimages()" />
+		</div>
+		<canvas id="imagecanvas"></canvas>
+		<canvas id="depthcanvas"></canvas>
+		<canvas id="out1"></canvas>
+		<canvas id="out2"></canvas>
+		<canvas id="out3"></canvas>
+		<canvas id="out4"></canvas>
+	</body>
+</html>

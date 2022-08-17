@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test</title>
+		<meta charset="utf-8">
+		<style>
+			body {
+				height: 2000px;
+				max-width: 839px;
+				background: #ae7e4c;
+			}
+
+			.scene {
+				position: absolute;
+				width: 100%;
+				transform: translateY(var(--translateY));
+				will-change: transform;
+			}
+			img {
+				position: absolute;
+			}
+			body, html {
+				margin: 0; padding: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div style="height: 20vh;"></div>
+		<img class="scene" data-modifier="30" src="/output3.png">
+		<img class="scene" data-modifier="20" src="/output2.png">
+		<img class="scene" data-modifier="10" src="/output1.png">
+		<img class="scene" data-modifier="0" src="/output0.png">
+		<script src="https://s.electerious.com/basicScroll/dist/basicScroll.min.js"></script>
+		<script>
+			// More information about this technique/pen:
+// https://medium.com/@electerious/parallax-scrolling-with-js-controlled-css-variables-63cfe96820c7#.o1kkd4cte
+
+document.querySelectorAll('.scene').forEach(elem => {
+
+  const modifier = elem.getAttribute('data-modifier');
+
+  basicScroll.create({
+    elem: elem,
+    from: 0,
+    to: 519,
+    direct: true,
+    props: {
+      '--translateY': {
+        from: '0',
+        to: `${10 * modifier}px` } } }).
+
+
+  start();
+
+});
+		</script>
+	</body>

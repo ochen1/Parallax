@@ -1,3 +1,90 @@
+function feather(data, width, height) {
+	// Pad the data array with 0s on all sides
+	var padded = new Uint8ClampedArray(data.length / 4 + 2 * height + 2 * width + 4);
+	for (var i = 0; i < height; i++) {
+		for (var j = 0; j < width; j++) {
+			padded[(i + 1) * (width + 2) + j + 1] = data[(i * width + j) * 4 + 3];
+		}
+	}
+	// Create the output array
+	output = Array(data.length / 4);
+	// Convolute the image using a sobel filter
+	for (var i = 0; i < height; i++) {
+		for (var j = 0; j < width; j++) {
+			output[i * width + j] =
+				Math.abs(
+					padded[i * (width + 2) + j] -
+						padded[i * (width + 2) + j + 2] +
+						2 * padded[(i + 1) * (width + 2) + j] -
+						2 * padded[(i + 1) * (width + 2) + j + 2] +
+						padded[(i + 2) * (width + 2) + j] -
+						padded[(i + 2) * (width + 2) + j + 2]
+				) +
+				Math.abs(
+					padded[i * (width + 2) + j] +
+						2 * padded[i * (width + 2) + j + 1] +
+						padded[i * (width + 2) + j + 2] -
+						padded[(i + 2) * (width + 2) + j] -
+						2 * padded[(i + 2) * (width + 2) + j + 1] -
+						padded[(i + 2) * (width + 2) + j + 2]
+				);
+			// Threshold the result
+			output[i * width + j] = output[i * width + j] ? 255 : 0;
+		}
+	}
+	// Generate a gaussian blur filter
+	var filter = Array(Number(document.querySelector("#filter").value) * 2 + 1);
+	var filtersize = Number(document.querySelector("#filter").value);
+	var filtersum = 0;
+	for (var i = 0; i < filter.length / 2; i++) {
+		filter[i] = i + 1;
+		filter[filter.length - i - 1] = filter[i];
+	}
+	for (var i = 0; i < filter.length; i++) {
+		filtersum += filter[i];
+	}
+	filtersum *= filtersize + 1;
+	// Pad the output array with 0s on all sides
+	padded = new Uint8ClampedArray(output.length + (filter.length - 1) * (height + width + 1));
+	for (var i = 0; i < height; i++) {
+		for (var j = 0; j < width; j++) {
+			padded[(i + filtersize) * (width + 2 * filtersize) + j + filtersize] = output[i * width + j];
+		}
+	}
+	// Convolute the image using the filter
+	for (var i = 0; i < height; i++) {
+		for (var j = 0; j < width; j++) {
+			var sum = 0;
+			for (var k = 0; k < filter.length; k++) {
+				for (var l = 0; l < filter.length; l++) {
+					sum += padded[(i + k) * (width + 2 * filtersize) + (j + l)] * filter[k] * filter[l];
+				}
+			}
+			output[i * width + j] = sum / filtersum;
+		}
+	}
+	var debugcanvas = document.querySelector("#debug");
+	debugcanvas.width = width;
+	debugcanvas.height = height;
+	var debugctx = debugcanvas.getContext("2d");
+	var debugoutput = debugctx.createImageData(width, height);
+	for (var i = 0; i < height; i++) {
+		for (var j = 0; j < width; j++) {
+			debugoutput.data[(i * width + j) * 4 + 0] = 255 / (output[i * width + j] ? output[i * width + j] : 1);
+			debugoutput.data[(i * width + j) * 4 + 1] = 255 / (output[i * width + j] ? output[i * width + j] : 1);
+			debugoutput.data[(i * width + j) * 4 + 2] = 255 / (output[i * width + j] ? output[i * width + j] : 1);
+			debugoutput.data[(i * width + j) * 4 + 3] = 255;
+		}
+	}
+	debugctx.putImageData(debugoutput, 0, 0);
+	// Multiply the alpha values of the input by the reciprocal of the output
+	for (var i = 0; i < height; i++) {
+		for (var j = 0; j < width; j++) {
+			data[(i * width + j) * 4 + 3] /= output[i * width + j] ? output[i * width + j] : 1;
+		}
+	}
+}
+
 function downloadcanvas(e) {
 	var id = e.target.id.replace("download", "");
 	var canvas = document.querySelectorAll(".out")[id];
@@ -62,6 +149,10 @@ function generatesliders() {
 		canvas.className = "out";
 		document.querySelector("#outputs").appendChild(canvas);
 	}
+	var canvas = document.createElement("canvas");
+	canvas.className = "out";
+	canvas.id = "debug";
+	document.querySelector("#outputs").appendChild(canvas);
 	// Add a button to split the images
 	var button = document.createElement("input");
 	button.type = "button";
@@ -89,11 +180,17 @@ function splitimages() {
 	for (var i in ctxs) {
 		ctxs[i].canvas.width = depth.width;
 		ctxs[i].canvas.height = depth.height;
-		ctxs[i].fillStyle = "black";
-		ctxs[i].fillRect(0, 0, depth.width, depth.height);
 		datas[i] = ctxs[i].getImageData(0, 0, ctxs[i].canvas.width, ctxs[i].canvas.height);
 	}
-	for (var i = 0; i < imageData.length; i++) {
+	for (var i of datas) {
+		for (var j = 0; j < i.data.length; j += 4) {
+			i.data[j] = imageData[j];
+			i.data[j + 1] = imageData[j + 1];
+			i.data[j + 2] = imageData[j + 2];
+			i.data[j + 3] = 0;
+		}
+	}
+	for (var i = 0; i < imageData.length; i += 4) {
 		var mindiff = Number.MAX_VALUE;
 		var minidx = 0;
 		for (var j = 0; j < avgs.length; j++) {
@@ -103,14 +200,18 @@ function splitimages() {
 				minidx = j;
 			}
 		}
-		// datas[minidx].data[i] = imageData[i].length == 4 ? imageData[i] : [...imageData[i], 255];
-		datas[minidx].data[i] = imageData[i];
+		datas[minidx].data[i + 3] = 255;
+	}
+	for (var i in datas) {
+		if (i == datas.length - 1) break;
+		feather(datas[i].data, depth.width, depth.height);
 	}
 	var downloads = document.querySelector("#downloads");
 	while (downloads.firstChild) {
 		downloads.removeChild(downloads.firstChild);
 	}
 	for (var i in ctxs) {
+		if (i == ctxs.length - 1) break;
 		ctxs[i].putImageData(datas[i], 0, 0);
 		// Remove all download buttons
 		// Create a new download button
